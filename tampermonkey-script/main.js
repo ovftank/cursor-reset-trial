@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cursor Reset Trial
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.0
 // @description  Reset Cursor Trial - Reset their Cursor trial period
 // @author       ovftank
 // @homepage     https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script
@@ -254,7 +254,10 @@
 
         handleAutomation();
 
-        if (window.location.href === 'https://www.cursor.com/settings') {
+        if (window.location.href.startsWith('https://www.cursor.com/settings')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shouldAutoReset = urlParams.get('reset') === 'true';
+
             const targetSelector = 'body > main > div > div > div > div > div > div.col-span-1.flex.flex-col.gap-2.xl\\:gap-4 > div:nth-child(1)';
             waitForElement(targetSelector, (targetDiv) => {
                 const button = document.createElement('button');
@@ -265,6 +268,10 @@
                     showConfirmToast('Are you sure you want to reset your trial?', resetTrial);
                 });
                 targetDiv.appendChild(button);
+
+                if (shouldAutoReset) {
+                    showConfirmToast('Are you sure you want to reset your trial?', resetTrial);
+                }
             });
         }
     };

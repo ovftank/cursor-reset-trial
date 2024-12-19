@@ -6,3 +6,4 @@ build/
 *.pyd
 *.pyw
 *.pyz
+__pycache__

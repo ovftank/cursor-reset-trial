@@ -1,33 +1,33 @@
-# Cursor Reset Trial 🔄
+# 🔄 Cursor Reset Trial
 
-![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+[🇺🇸 English](README.MD) | [🇻🇳 Tiếng Việt](README_VI.MD)
 
-## 🛠 Reset Tools
+### 1. 💻 Desktop Application
 
-1. [Desktop App](https://github.com/ovftank/cursor-reset-trial/releases/tag/v1.0.0) - Reset local IDE trial & usage stats
-2. [Browser Script](https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script) - Reset cloud account trial (optional)
+- 🔓 Reset local login account limit
+- 📊 Clear usage statistics
+- ⬇️ [Download](https://github.com/ovftank/cursor-reset-trial/releases/tag/v1.0.0)
 
-### ✨ Features
+### 2. 🌐 Tampermonkey Script
 
-- 🔄 Reset Cursor IDE trial period
-- 🚫 Clear local usage statistics
+- 🔄 Reset trial account linked with Github!
+- 📖 [View instructions here](https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script)
 
-### 🚀 Quick Start
+## 📝 Usage Instructions
 
-1. Download [CursorResetTrial.exe](https://github.com/ovftank/cursor-reset-trial/releases/download/v1.0.0/CursorResetTrial.exe)
-2. Run as Administrator
-3. Follow the simple steps below
+- ⚠️ Close Cursor IDE if running
+- 🔑 Run application as Administrator
 
-### 📝 How to Use
+1. 🚀 Run `CursorResetTrial.exe` as Administrator
+2. 🛑 Click "CLOSE ALL CURSOR PROCESSES"
+3. 🔄 Click "RESET TRIAL"
+4. ⏳ Wait for confirmation
+5. 🔁 Restart Cursor IDE
 
-1. Close Cursor IDE if it's running
-2. Click "CLOSE ALL CURSOR PROCESSES"
-3. Click "RESET TRIAL"
-4. Wait for confirmation
-5. Restart Cursor IDE
-6. Optional: Use the [Browser Script](https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script) to reset cloud trial
+### 🔄 Reset Account (Optional)
 
-### ⚠️ Note
+🌐 Visit the [Browser Script](https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script) page for instructions on resetting trial accounts.
 
-- Always run as Administrator
-- Close Cursor IDE before resetting
+## 💬 Need Support?
+
+📱 Contact [ovftank](https://t.me/ovftank)

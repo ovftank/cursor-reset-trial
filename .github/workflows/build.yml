@@ -39,19 +39,15 @@ jobs:
         run: |
           python build.py
 
-      - name: Rename executable
-        shell: pwsh
-        run: |
-          if (Test-Path "dist/main.exe") {
-            Move-Item -Path "dist/main.exe" -Destination "dist/CursorResetTrial.exe"
-          } else {
-            Write-Error "File dist/main.exe not found."
-          }
-
       - name: Move executable to root
         shell: pwsh
         run: |
-          Move-Item -Path "dist/CursorResetTrial.exe" -Destination "CursorResetTrial.exe"
+          if (Test-Path "dist/CursorResetTrial.exe") {
+            Move-Item -Path "dist/CursorResetTrial.exe" -Destination "CursorResetTrial.exe" -Force
+          } else {
+            Write-Error "File dist/CursorResetTrial.exe not found."
+            exit 1
+          }
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4

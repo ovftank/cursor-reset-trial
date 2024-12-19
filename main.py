@@ -303,7 +303,12 @@ class MainWindow(QMainWindow):
     def close_cursor_processes(self):
         try:
             closed_count = 0
-            for proc in psutil.process_iter(['name']):
+            current_pid = os.getpid()
+
+            for proc in psutil.process_iter(['name', 'pid']):
+                if proc.info['pid'] == current_pid:
+                    continue
+
                 if 'cursor' in proc.info['name'].lower():
                     proc.kill()
                     closed_count += 1

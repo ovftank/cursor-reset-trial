@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Cursor Reset Trial
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Reset Cursor Trial - Reset their Cursor trial period
 // @author       ovftank
 // @homepage     https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script
 // @supportURL   https://github.com/ovftank
-// @match        https://www.cursor.com/settings
+// @match        https://www.cursor.com/*
+// @match        https://authenticator.cursor.sh/*
 // @grant        GM_xmlhttpRequest
 // @icon         https://github.com/ovftank/cursor-reset-trial/raw/refs/heads/main/images/icon.ico
 // @updateURL    https://raw.githubusercontent.com/ovftank/cursor-reset-trial/refs/heads/main/tampermonkey-script/main.js
@@ -233,19 +234,39 @@
         });
     };
 
+    const handleAutomation = () => {
+        const currentURL = window.location.href;
+
+        if (currentURL === 'https://www.cursor.com/') {
+            window.location.href = 'https://www.cursor.com/settings';
+        }
+        else if (currentURL.startsWith('https://authenticator.cursor.sh/')) {
+            waitForElement("body > div.radix-themes > div > div > div:nth-child(2) > div > form > div > div.rt-Grid.rt-r-gap-3 > a:nth-child(2)",
+                (element) => {
+                    element.click();
+                }
+            );
+        }
+    };
+
     const initialize = () => {
         createToastStyles();
-        const targetSelector = 'body > main > div > div > div > div > div > div.col-span-1.flex.flex-col.gap-2.xl\\:gap-4 > div:nth-child(1)';
-        waitForElement(targetSelector, (targetDiv) => {
-            const button = document.createElement('button');
-            button.innerHTML = 'Reset Trial';
-            button.className = 'delete-account-button';
 
-            button.addEventListener('click', () => {
-                showConfirmToast('Are you sure you want to reset your trial?', resetTrial);
+        handleAutomation();
+
+        if (window.location.href === 'https://www.cursor.com/settings') {
+            const targetSelector = 'body > main > div > div > div > div > div > div.col-span-1.flex.flex-col.gap-2.xl\\:gap-4 > div:nth-child(1)';
+            waitForElement(targetSelector, (targetDiv) => {
+                const button = document.createElement('button');
+                button.innerHTML = 'Reset Trial';
+                button.className = 'delete-account-button';
+
+                button.addEventListener('click', () => {
+                    showConfirmToast('Are you sure you want to reset your trial?', resetTrial);
+                });
+                targetDiv.appendChild(button);
             });
-            targetDiv.appendChild(button);
-        });
+        }
     };
 
     initialize();

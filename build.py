@@ -11,34 +11,52 @@ def create_executable():
     images_dir.mkdir(exist_ok=True)
 
     icon = str(images_dir / "icon.ico")
+    icon_mac = str(images_dir / "icon.icns")
 
     # Kiểm tra file icon tồn tại
-    if not Path(icon).exists():
+    if sys.platform.startswith('win') and not Path(icon).exists():
         print(f"Lỗi: Không tìm thấy file icon tại {icon}")
         sys.exit(1)
+    elif sys.platform.startswith('darwin') and not Path(icon_mac).exists():
+        print(f"Lỗi: Không tìm thấy file icon tại {icon_mac}")
+        sys.exit(1)
 
+    # Cấu hình cơ bản cho cả Windows và macOS
     pyinstaller_command = [
         'pyinstaller',
         '--noconfirm',
         '--onefile',
         '--windowed',
-        '--uac-admin',
         '--clean',
-        '--icon', icon,
-        '--add-data', f'{icon};.',
-        '--add-data', f'{icon};images',
         '--name', 'CursorResetTrial',
         'src/__main__.py'
     ]
 
+    # Thêm cấu hình riêng cho từng hệ điều hành
+    if sys.platform.startswith('win'):
+        pyinstaller_command.extend([
+            '--uac-admin',
+            '--icon', icon,
+            '--add-data', f'{icon};.',
+            '--add-data', f'{icon};images'
+        ])
+    elif sys.platform.startswith('darwin'):
+        pyinstaller_command.extend([
+            '--icon', icon_mac,
+            '--add-data', f'{icon_mac}:.',
+            '--add-data', f'{icon_mac}:images',
+            '--target-architecture', 'universal2'
+        ])
+
     try:
         result = subprocess.run(pyinstaller_command,
-                                capture_output=True,
-                                text=True,
-                                encoding='utf-8')
+                              capture_output=True,
+                              text=True,
+                              encoding='utf-8')
 
         if result.returncode == 0:
-            output_file = Path('dist/CursorResetTrial.exe')
+            output_file = Path('dist/CursorResetTrial.exe' if sys.platform.startswith('win')
+                             else 'dist/CursorResetTrial.app')
             if output_file.exists():
                 print("Build thành công!")
                 print(f"File thực thi được tạo tại: {output_file}")

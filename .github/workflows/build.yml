@@ -16,10 +16,12 @@ permissions: write-all
 
 jobs:
   build:
-    runs-on: windows-latest
     strategy:
       matrix:
+        os: [windows-latest, macos-latest]
         python-version: ['3.10']
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -39,7 +41,8 @@ jobs:
         run: |
           python build.py
 
-      - name: Move executable to root
+      - name: Move executable (Windows)
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if (Test-Path "dist/CursorResetTrial.exe") {
@@ -49,25 +52,44 @@ jobs:
             exit 1
           }
 
-      - name: Upload Build Artifact
+      - name: Compress app bundle (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd dist
+          zip -r ../CursorResetTrial-mac.zip CursorResetTrial.app
+
+      - name: Upload Build Artifact (Windows)
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: CursorResetTrial
+          name: CursorResetTrial-windows
           path: CursorResetTrial.exe
+
+      - name: Upload Build Artifact (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: CursorResetTrial-mac
+          path: CursorResetTrial-mac.zip
 
       - name: Create Release Description
         id: create_description
         run: |
-          echo "## CursorResetTrial.exe" > release_description.txt
+          echo "## CursorResetTrial" > release_description.txt
           echo "" >> release_description.txt
           echo "🔄 A tool to reset Cursor trial period" >> release_description.txt
+          echo "" >> release_description.txt
+          echo "### Downloads" >> release_description.txt
+          echo "- Windows: CursorResetTrial.exe" >> release_description.txt
+          echo "- macOS: CursorResetTrial-mac.zip" >> release_description.txt
           echo "" >> release_description.txt
           echo "### Features" >> release_description.txt
           echo "- Reset trial configuration" >> release_description.txt
           echo "- Clean application data" >> release_description.txt
           echo "" >> release_description.txt
           echo "### Note" >> release_description.txt
-          echo "- Run as Administrator" >> release_description.txt
+          echo "- Windows: Run as Administrator" >> release_description.txt
+          echo "- macOS: Right-click and select Open to bypass Gatekeeper" >> release_description.txt
 
       - name: Configure Git
         run: |
@@ -75,10 +97,13 @@ jobs:
           git config user.email "actions@github.com"
 
       - name: Create GitHub Release
+        if: runner.os == 'Windows'  # Chỉ tạo release một lần từ Windows runner
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: CursorResetTrial.exe
+          files: |
+            CursorResetTrial.exe
+            CursorResetTrial-mac.zip
           body_path: release_description.txt
           name: Release v${{ github.event.inputs.version || '1.0.0' }}
           tag_name: v${{ github.event.inputs.version || '1.0.0' }}

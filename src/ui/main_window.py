@@ -1,6 +1,7 @@
 import ctypes
 import sys
 from pathlib import Path
+import platform
 
 import psutil
 from PyQt5.QtCore import Qt, QThread, QUrl, pyqtSignal
@@ -54,7 +55,11 @@ class MainWindow(QMainWindow):
         else:
             bundle_dir = Path(__file__).parent.parent.parent
 
-        icon_path = bundle_dir / "images" / "icon.ico"
+        if platform.system() == "Darwin":
+            icon_path = bundle_dir / "images" / "icon.icns"
+        else:
+            icon_path = bundle_dir / "images" / "icon.ico"
+
         self.setWindowIcon(QIcon(str(icon_path)))
 
         self.setup_ui()

@@ -210,7 +210,6 @@
     };
 
     const resetTrial = (overlay) => {
-        sendCallback({ action: 'reset_loading' });
 
         GM_xmlhttpRequest({
             method: 'POST',
@@ -220,14 +219,9 @@
             },
             onload: (response) => {
                 if (response.status === 200) {
-                    sendCallback({ action: 'reset_complete' });
                     document.body.removeChild(overlay);
                     window.location.href = 'https://authenticator.cursor.sh';
                 } else {
-                    sendCallback({
-                        action: 'reset_failed',
-                        error: 'Server returned status ' + response.status
-                    });
                     const messageDiv = overlay.querySelector('.toast-message');
                     const buttons = overlay.querySelector('.toast-buttons');
                     messageDiv.classList.remove('loading');
@@ -237,10 +231,6 @@
             },
             onerror: (error) => {
                 console.error('Error:', error);
-                sendCallback({
-                    action: 'reset_failed',
-                    error: error.toString()
-                });
                 const messageDiv = overlay.querySelector('.toast-message');
                 const buttons = overlay.querySelector('.toast-buttons');
                 messageDiv.classList.remove('loading');
@@ -291,27 +281,6 @@
             });
         }
     };
-
-    // Function to send callback to local application
-    async function sendCallback(data) {
-        try {
-            const response = await fetch('http://localhost:8765', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Error sending callback:', error);
-        }
-    }
 
     initialize();
 })();

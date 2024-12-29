@@ -33,10 +33,6 @@ TRANSLATIONS = {
         'securely_removed': "Removed: {}",
         'removed_directory': "Removed directory: {}",
         'error_config': "Error creating new configuration: {}",
-        'web_reset_loading': 'Resetting trial in progress...',
-        'web_reset_complete': 'Reset trial completed successfully, remaining trials: 250',
-        'web_reset_failed': 'Reset trial failed: {}',
-        'callback_error': 'Error handling callback: {}',
     },
     'vi': {
         'window_title': "CURSOR RESET TRIAL",
@@ -72,9 +68,5 @@ TRANSLATIONS = {
         'securely_removed': "Đã xóa: {}",
         'removed_directory': "Đã xóa thư mục: {}",
         'error_config': "Lỗi khi tạo cấu hình mới: {}",
-        'web_reset_loading': 'Đang reset tài khoản...',
-        'web_reset_complete': 'Reset tài khoản thành công, số lượt còn lại: 250',
-        'web_reset_failed': 'Reset tài khoản thất bại: {}',
-        'callback_error': 'Lỗi xử lý callback: {}',
     }
 }

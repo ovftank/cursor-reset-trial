@@ -4,13 +4,11 @@ from pathlib import Path
 import platform
 
 import psutil
-from PyQt5.QtCore import Qt, QThread, QUrl, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QThread, QUrl, pyqtSignal
 from PyQt5.QtGui import QDesktopServices, QIcon
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
                              QPushButton, QTabWidget, QTextEdit, QVBoxLayout,
-                             QWidget, QProgressDialog)
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json
+                             QWidget)
 
 from src.config.settings import CURSOR_PATHS
 from src.config.translations import TRANSLATIONS
@@ -45,52 +43,7 @@ class ResetThread(QThread):
         self.finished_signal.emit()
 
 
-class CallbackHandler(BaseHTTPRequestHandler):
-    callback_signal = None
-
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-
-        try:
-            data = json.loads(post_data.decode('utf-8'))
-            if self.callback_signal:
-                self.callback_signal.emit(data)
-
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'status': 'success'}).encode('utf-8'))
-        except Exception as e:
-            self.send_response(500)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
-
-
-class ServerThread(QThread):
-    def __init__(self, callback_signal):
-        super().__init__()
-        CallbackHandler.callback_signal = callback_signal
-        self.server = None
-
-    def run(self):
-        try:
-            self.server = HTTPServer(('localhost', 8765), CallbackHandler)
-            self.server.serve_forever()
-        except Exception as e:
-            print(f"Server error: {str(e)}")
-
-    def quit(self):
-        if self.server:
-            self.server.shutdown()
-            self.server.server_close()
-        super().quit()
-
-
 class MainWindow(QMainWindow):
-    callback_received = pyqtSignal(dict)
-
     def __init__(self):
         super().__init__()
         self.current_language = 'en'
@@ -111,13 +64,6 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
         self.setup_style()
-
-        self.callback_received.connect(self.handle_callback)
-        self.server_thread = ServerThread(self.callback_received)
-        self.server_thread.start()
-
-        # Create a progress dialog for showing status
-        self.progress_dialog = None
 
     def setup_ui(self):
         central_widget = QWidget()
@@ -361,90 +307,3 @@ class MainWindow(QMainWindow):
         self.violentmonkey_button.setText(trans['install_violentmonkey'])
         self.script_button.setText(trans['install_script'])
         self.reset_account_button.setText(trans['reset_account'])
-
-    def show_status_dialog(self, title, message):
-        """Show a non-blocking status dialog"""
-        if not self.progress_dialog:
-            self.progress_dialog = QProgressDialog(self)
-            self.progress_dialog.setWindowTitle(title)
-            self.progress_dialog.setLabelText(message)
-            self.progress_dialog.setCancelButton(None)
-            self.progress_dialog.setRange(0, 0)  # Infinite progress bar
-            self.progress_dialog.setWindowModality(Qt.WindowModal)
-        else:
-            self.progress_dialog.setLabelText(message)
-
-        self.progress_dialog.show()
-
-    def hide_status_dialog(self):
-        """Hide the status dialog"""
-        if self.progress_dialog:
-            self.progress_dialog.hide()
-
-    @pyqtSlot(dict)
-    def handle_callback(self, data):
-        """Handle callbacks received from the web"""
-        try:
-            action = data.get('action')
-            if action == 'reset_loading':
-                self.reset_account_button.setEnabled(False)
-                self.show_status_dialog(
-                    TRANSLATIONS[self.current_language]['window_title'],
-                    TRANSLATIONS[self.current_language]['web_reset_loading']
-                )
-            elif action == 'reset_complete':
-                self.reset_account_button.setEnabled(True)
-                self.hide_status_dialog()
-                QMessageBox.information(
-                    self,
-                    TRANSLATIONS[self.current_language]['window_title'],
-                    TRANSLATIONS[self.current_language]['web_reset_complete']
-                )
-            elif action == 'reset_failed':
-                error = data.get('error', 'Unknown error')
-                self.reset_account_button.setEnabled(True)
-                self.hide_status_dialog()
-                QMessageBox.warning(
-                    self,
-                    TRANSLATIONS[self.current_language]['window_title'],
-                    TRANSLATIONS[self.current_language]['web_reset_failed'].format(error)
-                )
-        except Exception as e:
-            self.reset_account_button.setEnabled(True)
-            self.hide_status_dialog()
-            QMessageBox.critical(
-                self,
-                TRANSLATIONS[self.current_language]['window_title'],
-                TRANSLATIONS[self.current_language]['callback_error'].format(str(e))
-            )
-
-    def closeEvent(self, event):
-        """Handle application closing"""
-        try:
-            # Hide any open dialogs first
-            if self.progress_dialog:
-                self.progress_dialog.hide()
-
-            # Stop the server thread properly
-            if hasattr(self, 'server_thread'):
-                # Create a new HTTPServer instance just to send a shutdown request
-                import socket
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                try:
-                    sock.connect(('localhost', 8765))
-                    sock.close()
-                except Exception:
-                    pass  # Server might already be closed
-
-                self.server_thread.quit()
-                self.server_thread.wait(1000)  # Wait up to 1 second
-
-                # Force terminate if still running
-                if self.server_thread.isRunning():
-                    self.server_thread.terminate()
-                    self.server_thread.wait()
-
-            event.accept()
-        except Exception as e:
-            print(f"Error during closing: {str(e)}")
-            event.accept()  # Always close even if there's an error

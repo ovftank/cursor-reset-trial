@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cursor Reset Trial
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Reset Cursor Trial - Reset their Cursor trial period
 // @author       ovftank
 // @homepage     https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script
@@ -143,7 +143,7 @@
         document.head.appendChild(style);
     };
 
-    const showConfirmToast = (message, onConfirm) => {
+    const showConfirmToast = (message, onConfirm, autoConfirm = false) => {
         const overlay = document.createElement('div');
         overlay.className = 'toast-overlay';
 
@@ -164,7 +164,7 @@
         const messageDiv = toast.querySelector('.toast-message');
         const buttons = toast.querySelector('.toast-buttons');
 
-        confirmBtn.addEventListener('click', () => {
+        const confirmAction = () => {
             messageDiv.classList.add('loading');
             buttons.style.display = 'none';
             messageDiv.textContent = 'Processing...';
@@ -172,11 +172,16 @@
             spinner.className = 'loading-spinner';
             messageDiv.appendChild(spinner);
             onConfirm(overlay);
-        });
+        };
 
-        cancelBtn.addEventListener('click', () => {
-            document.body.removeChild(overlay);
-        });
+        if (autoConfirm) {
+            setTimeout(confirmAction, 500);
+        } else {
+            confirmBtn.addEventListener('click', confirmAction);
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(overlay);
+            });
+        }
 
         overlay.appendChild(toast);
         document.body.appendChild(overlay);
@@ -205,6 +210,8 @@
     };
 
     const resetTrial = (overlay) => {
+        sendCallback({ action: 'reset_loading' });
+
         GM_xmlhttpRequest({
             method: 'POST',
             url: 'https://www.cursor.com/api/dashboard/delete-account',
@@ -213,9 +220,14 @@
             },
             onload: (response) => {
                 if (response.status === 200) {
+                    sendCallback({ action: 'reset_complete' });
                     document.body.removeChild(overlay);
                     window.location.href = 'https://authenticator.cursor.sh';
                 } else {
+                    sendCallback({
+                        action: 'reset_failed',
+                        error: 'Server returned status ' + response.status
+                    });
                     const messageDiv = overlay.querySelector('.toast-message');
                     const buttons = overlay.querySelector('.toast-buttons');
                     messageDiv.classList.remove('loading');
@@ -225,6 +237,10 @@
             },
             onerror: (error) => {
                 console.error('Error:', error);
+                sendCallback({
+                    action: 'reset_failed',
+                    error: error.toString()
+                });
                 const messageDiv = overlay.querySelector('.toast-message');
                 const buttons = overlay.querySelector('.toast-buttons');
                 messageDiv.classList.remove('loading');
@@ -270,11 +286,32 @@
                 targetDiv.appendChild(button);
 
                 if (shouldAutoReset) {
-                    showConfirmToast('Are you sure you want to reset your trial?', resetTrial);
+                    showConfirmToast('Are you sure you want to reset your trial?', resetTrial, true);
                 }
             });
         }
     };
+
+    // Function to send callback to local application
+    async function sendCallback(data) {
+        try {
+            const response = await fetch('http://localhost:8765', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error sending callback:', error);
+        }
+    }
 
     initialize();
 })();

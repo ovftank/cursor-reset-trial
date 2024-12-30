@@ -14,3 +14,5 @@ CURSOR_PATHS = [
     os.path.expandvars(
         r"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Cursor")
 ]
+
+KEY_PATH = os.path.expandvars(r"%APPDATA%\\ovftank.json")

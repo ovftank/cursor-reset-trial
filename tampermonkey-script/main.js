@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cursor Reset Trial
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Reset Cursor Trial - Reset their Cursor trial period
 // @author       ovftank
 // @homepage     https://github.com/ovftank/cursor-reset-trial/tree/main/tampermonkey-script
@@ -10,8 +10,6 @@
 // @match        https://authenticator.cursor.sh/*
 // @grant        GM_xmlhttpRequest
 // @icon         https://github.com/ovftank/cursor-reset-trial/raw/refs/heads/main/images/icon.ico
-// @updateURL    https://raw.githubusercontent.com/ovftank/cursor-reset-trial/refs/heads/main/tampermonkey-script/main.js
-// @downloadURL  https://raw.githubusercontent.com/ovftank/cursor-reset-trial/refs/heads/main/tampermonkey-script/main.js
 // @contactURL   https://t.me/ovftank
 // @copyright    2024, ovftank (https://greasyfork.org/users/1392240-ovftank)
 // ==/UserScript==

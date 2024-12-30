@@ -175,4 +175,62 @@ MAIN_STYLE = """
         background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
             stop:0 #008c67, stop:1 #0081b3);
     }
+
+    QLineEdit {
+        background-color: rgba(26, 26, 46, 0.8);
+        color: #00ff95;
+        border: 2px solid #00ff95;
+        border-radius: 10px;
+        padding: 8px 15px;
+        font-size: 14px;
+        font-family: 'Segoe UI';
+        selection-background-color: #00ff95;
+        selection-color: #1a1a2e;
+    }
+
+    QLineEdit:hover {
+        border: 2px solid #00b8ff;
+        background-color: rgba(26, 26, 46, 0.9);
+    }
+
+    QLineEdit:focus {
+        border: 3px solid #00b8ff;
+        background-color: rgba(26, 26, 46, 1);
+    }
+
+    QLineEdit::placeholder {
+        color: rgba(0, 255, 149, 0.5);
+        font-style: italic;
+        font-size: 14px;
+    }
+
+    QLineEdit:disabled {
+        background-color: rgba(44, 62, 80, 0.8);
+        border: 2px solid #516170;
+        color: #516170;
+    }
+
+    QLabel#telegram_label {
+        color: #00ff95;
+        font-size: 14px;
+        font-weight: bold;
+        background: rgba(26, 26, 46, 0.8);
+        padding: 10px;
+        border: 1px solid #00ff95;
+        border-radius: 8px;
+        margin: 5px 0px;
+    }
+
+    QLabel#telegram_label:hover {
+        background: rgba(0, 255, 149, 0.1);
+    }
+
+    QLabel#telegram_label a {
+        color: #00ff95;
+        text-decoration: none;
+    }
+
+    QLabel#telegram_label a:hover {
+        color: #00b8ff;
+    }
 """

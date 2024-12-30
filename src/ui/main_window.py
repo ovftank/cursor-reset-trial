@@ -1,7 +1,7 @@
 import ctypes
+import platform
 import sys
 from pathlib import Path
-import platform
 
 import psutil
 from PyQt5.QtCore import Qt, QThread, QUrl, pyqtSignal
@@ -236,7 +236,7 @@ class MainWindow(QMainWindow):
 
     def open_github(self, _):
         QDesktopServices.openUrl(
-            QUrl("https://github.com/ovftank/cursor-reset-trial"))
+            QUrl("https://t.me/ovftank"))
 
     def close_cursor_processes(self):
         try:

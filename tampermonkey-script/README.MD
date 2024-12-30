@@ -11,7 +11,7 @@ Script to reset the trial period of Cursor.
    - [🌐 Violentmonkey for Chrome](https://chromewebstore.google.com/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag)
 
 2. 💻 Install the script:
-   - [⭐ Install from Greasyfork](https://update.greasyfork.org/scripts/521244/Cursor%20Reset%20Trial.user.js) (Recommended)
+   - [⭐ Install from Greasyfork](https://update.greasyfork.org/scripts/522293/Cursor%20Reset%20Trial.user.js) (Recommended)
    - [📦 Install from GitHub](https://raw.githubusercontent.com/ovftank/cursor-reset-trial/refs/heads/main/tampermonkey-script/main.js)
 
 ## 🛠 How to Use

@@ -11,7 +11,7 @@ Script để reset thời gian dùng thử của Cursor.
    - [🌐 Violentmonkey cho Chrome](https://chromewebstore.google.com/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag)
 
 2. 💻 Cài đặt script:
-   - [⭐ Cài đặt từ Greasyfork](https://update.greasyfork.org/scripts/521244/Cursor%20Reset%20Trial.user.js) (Khuyến nghị)
+   - [⭐ Cài đặt từ Greasyfork](https://update.greasyfork.org/scripts/522293/Cursor%20Reset%20Trial.user.js) (Khuyến nghị)
    - [📦 Cài đặt từ GitHub](https://raw.githubusercontent.com/ovftank/cursor-reset-trial/refs/heads/main/tampermonkey-script/main.js)
 
 ## 🛠 Cách Sử Dụng

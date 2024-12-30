@@ -180,7 +180,7 @@ class MainWindow(QMainWindow):
         self.script_button.setMinimumWidth(200)
         self.script_button.setCursor(Qt.PointingHandCursor)
         self.script_button.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://update.greasyfork.org/scripts/521244/Cursor%20Reset%20Trial.user.js")))
+            QUrl("https://update.greasyfork.org/scripts/522293/Cursor%20Reset%20Trial.user.js")))
         layout.addWidget(self.script_button)
 
         self.reset_account_button = QPushButton("RESET ACCOUNT TRIAL")

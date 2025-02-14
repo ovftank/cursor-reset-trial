@@ -12,7 +12,6 @@ def create_executable():
 
     icon = str(images_dir / "icon.ico")
 
-    # Kiểm tra file icon tồn tại
     if not Path(icon).exists():
         print(f"Lỗi: Không tìm thấy file icon tại {icon}")
         sys.exit(1)

@@ -1,6 +1,5 @@
 import json
 import os
-import platform
 import random
 import string
 import sys
@@ -13,14 +12,18 @@ from PyQt5.QtWidgets import (QLabel, QLineEdit, QMainWindow, QMessageBox,
                              QPushButton, QVBoxLayout, QWidget)
 
 from src.config.settings import KEY_PATH
+from src.config.translations import TRANSLATIONS
 from src.ui.styles import MAIN_STYLE
 
 
 class KeyCheckWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CURSOR PRO")
-        self.setFixedSize(400, 300)
+        self.current_language = 'vi'
+        trans = TRANSLATIONS[self.current_language]
+
+        self.setWindowTitle(trans['window_title_check'])
+        self.setFixedSize(450, 350)
         self.setStyleSheet(MAIN_STYLE)
 
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -28,33 +31,46 @@ class KeyCheckWindow(QMainWindow):
         else:
             bundle_dir = Path(__file__).parent.parent.parent
 
-        if platform.system() == "Darwin":
-            icon_path = bundle_dir / "images" / "icon.icns"
-        else:
-            icon_path = bundle_dir / "images" / "icon.ico"
+        icon_path = bundle_dir / "images" / "icon.ico"
 
         self.setWindowIcon(QIcon(str(icon_path)))
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 40, 30, 40)
+        layout.setSpacing(15)
+        layout.setContentsMargins(35, 20, 35, 25)
+
+        top_layout = QVBoxLayout()
+        language_container = QWidget()
+        language_layout = QVBoxLayout(language_container)
+        language_layout.setAlignment(Qt.AlignRight)
+
+        self.language_button = QPushButton(trans['language_button_en'])
+        self.language_button.setFixedSize(70, 35)
+        self.language_button.setCursor(Qt.PointingHandCursor)
+        self.language_button.clicked.connect(self.toggle_language)
+        self.language_button.setObjectName("language_button")
+
+        language_layout.addWidget(self.language_button)
+        language_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addWidget(language_container)
+        layout.addLayout(top_layout)
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
-        content_layout.setSpacing(20)
-        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(25)
+        content_layout.setContentsMargins(0, 10, 0, 0)
 
-        self.title_label = QLabel("Nhập Key")
+        self.title_label = QLabel(trans['enter_key_title'])
         self.title_label.setAlignment(Qt.AlignCenter)
 
         self.key_input = QLineEdit()
-        self.key_input.setPlaceholderText("Nhập key đã mua")
+        self.key_input.setPlaceholderText(trans['key_placeholder'])
         self.key_input.setMaxLength(14)
         self.key_input.setFixedHeight(45)
 
-        self.verify_button = QPushButton("Xác thực")
+        self.verify_button = QPushButton(trans['verify_button'])
         self.verify_button.setFixedHeight(45)
 
         content_layout.addWidget(self.title_label)
@@ -63,8 +79,7 @@ class KeyCheckWindow(QMainWindow):
         content_layout.addStretch()
 
         self.telegram_label = QLabel()
-        self.telegram_label.setText(
-            '<a style="color: #00ff95;" href="https://t.me/ovftank">Liên hệ Telegram để mua key</a>')
+        self.telegram_label.setText(trans['buy_key_link'])
         self.telegram_label.setAlignment(Qt.AlignCenter)
         self.telegram_label.setOpenExternalLinks(True)
         self.telegram_label.setObjectName("telegram_label")
@@ -75,6 +90,7 @@ class KeyCheckWindow(QMainWindow):
         self.main_window = None
 
     def check_existing_key(self):
+        trans = TRANSLATIONS[self.current_language]
         if os.path.exists(KEY_PATH):
             try:
                 with open(KEY_PATH, 'r') as f:
@@ -95,8 +111,8 @@ class KeyCheckWindow(QMainWindow):
                     if datetime.now() > expiration_date:
                         QMessageBox.warning(
                             self,
-                            "Key hết hạn",
-                            "Key của bạn đã hết hạn. Vui lòng liên hệ ovftank để mua key mới"
+                            trans['invalid_key_title'],
+                            trans['key_expired']
                         )
                         return False
 
@@ -108,8 +124,9 @@ class KeyCheckWindow(QMainWindow):
 
                     QMessageBox.information(
                         self,
-                        "Thông báo",
-                        f"Thời gian còn lại: {days} ngày, {hours} giờ, {minutes} phút, {seconds} giây"
+                        trans['success_title'],
+                        trans['time_remaining'].format(
+                            days, hours, minutes, seconds)
                     )
                     return True
 
@@ -118,6 +135,7 @@ class KeyCheckWindow(QMainWindow):
         return False
 
     def verify_key(self):
+        trans = TRANSLATIONS[self.current_language]
         key = self.key_input.text().strip()
         if key == "VIP":
             try:
@@ -131,16 +149,16 @@ class KeyCheckWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(
                     self,
-                    "Lỗi",
-                    f"Không thể lưu key: {str(e)}"
+                    trans['error_title'],
+                    trans['error_save_key'].format(str(e))
                 )
                 return False
 
         if not key.startswith('ovftank_') or len(key) != 14:
             QMessageBox.warning(
                 self,
-                "Key không hợp lệ",
-                "Vui lòng liên hệ ovftank để mua key"
+                trans['invalid_key_title'],
+                trans['invalid_key']
             )
             return False
 
@@ -148,8 +166,8 @@ class KeyCheckWindow(QMainWindow):
         if duration_type not in ['D', 'W', 'M']:
             QMessageBox.warning(
                 self,
-                "Key không hợp lệ",
-                "Vui lòng thử lại"
+                trans['invalid_key_title'],
+                trans['try_again']
             )
             return False
 
@@ -171,8 +189,9 @@ class KeyCheckWindow(QMainWindow):
 
             QMessageBox.information(
                 self,
-                "Thành công",
-                f"Key đã được kích hoạt. Hết hạn ngày: {expiration_date.strftime('%d/%m/%Y')}\nVui lòng khởi động lại phần mềm để sử dụng"
+                trans['success_title'],
+                trans['key_activated'].format(
+                    expiration_date.strftime('%d/%m/%Y'))
             )
 
             QTimer.singleShot(1000, self.close)
@@ -181,8 +200,8 @@ class KeyCheckWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Lỗi",
-                f"Không thể lưu key: {str(e)}"
+                trans['error_title'],
+                trans['error_save_key'].format(str(e))
             )
             return False
 
@@ -192,6 +211,22 @@ class KeyCheckWindow(QMainWindow):
         duration_types = ['D', 'W', 'M']
         duration = random.choice(duration_types)
         return f"ovftank_{random_str}{duration}"
+
+    def toggle_language(self):
+        self.current_language = 'vi' if self.current_language == 'en' else 'en'
+        trans = TRANSLATIONS[self.current_language]
+        self.language_button.setText(
+            trans[f'language_button_{self.current_language}'])
+        self.update_translations()
+
+    def update_translations(self):
+        trans = TRANSLATIONS[self.current_language]
+
+        self.setWindowTitle(trans['window_title_check'])
+        self.title_label.setText(trans['enter_key_title'])
+        self.key_input.setPlaceholderText(trans['key_placeholder'])
+        self.verify_button.setText(trans['verify_button'])
+        self.telegram_label.setText(trans['buy_key_link'])
 
 
 def show_key_window():

@@ -1,9 +1,4 @@
-dist/
+__pycache__/
 build/
-*.spec
-*.pyc
-*.pyo
-*.pyd
-*.pyw
-*.pyz
-__pycache__
+dist/
+cursor_manager.egg-info/

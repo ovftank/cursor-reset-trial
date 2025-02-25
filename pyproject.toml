@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=75.8.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cursor-manager"
+version = "1.0.0"
+authors = [
+  { name="ovftank" },
+]
+description = "Cursor IDE Manager"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "tqdm",
+    "psutil",
+    "questionary",
+    "rich",
+    "typer",
+    "pywin32",
+]
+
+[project.scripts]
+cursor-manager = "src.cli.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*"]

@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cursor-manager"
-version = "1.0.2"
+version = "1.0.7"
 authors = [
-  { name="ovftank" },
+  { name="ovftank", email="ovftank@gmail.com" },
 ]
 description = "Cursor IDE Manager"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {file = "LICENSE"}
 dependencies = [
     "requests",
     "tqdm",
@@ -22,6 +23,7 @@ dependencies = [
 ]
 
 [project.urls]
+"Homepage" = "https://ovfteam.com"
 "Repository" = "https://github.com/ovftank/cursor-reset-trial/tree/cli"
 
 

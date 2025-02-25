@@ -16,7 +16,7 @@ class ColorfulLogger:
     def __init__(self, name: str) -> None:
         self.logger = logging.getLogger(name)
         self.formatter = logging.Formatter(
-            '%(time)s - %(color)s%(message)s%(reset)s\r',
+            '%(color)s%(message)s%(reset)s',
             defaults={'reset': self.RESET}
         )
 

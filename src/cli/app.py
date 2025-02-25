@@ -1,4 +1,5 @@
 import psutil
+import questionary
 import typer
 
 from src.cli.menu import Menu
@@ -6,6 +7,7 @@ from src.core.cursor_cleaner import CursorCleaner
 from src.core.cursor_downloader import CursorDownloader
 from src.core.cursor_manager import CursorManager
 from src.core.update_disabler import CursorAutoUpdateDisabler
+from src.utils.browser_handler import BrowserHandler
 from src.utils.console import ConsoleManager
 
 
@@ -13,7 +15,8 @@ class CursorManagerCLI:
     def __init__(self):
         self.app = typer.Typer(
             help="Cursor Manager CLI",
-            no_args_is_help=False
+            no_args_is_help=False,
+            invoke_without_command=True
         )
         self.console = ConsoleManager()
         self.cursor_manager = CursorManager()
@@ -21,33 +24,43 @@ class CursorManagerCLI:
         self.menu = Menu(self.console)
         self.downloader = CursorDownloader()
         self.cleaner = CursorCleaner()
+        self.browser_handler = BrowserHandler()
 
-        self.app.command(help="Xem phiên bản Cursor")(self.info)
         self.app.command(help="Reset ID và thông tin máy")(self.reset)
         self.app.command(name="tat-update",
                          help="Tắt tự động cập nhật")(self.disable_update)
-        self.app.command(help="Xem trạng thái chi tiết")(self.status)
         self.app.command(
-            name="tai",
-            help="Tải Cursor v0.44.11"
-        )(self.download_v0_44_11)
+            name="downgrade",
+            help="Cài Cursor phiên bản v0.44.11"
+        )(self.downgrade_to_v0_44_11)
         self.app.command(name="xoa-cache",
                          help="Xóa cache của Cursor")(self.clear_cache)
         self.app.command(name="kill", help="Tắt tất cả tiến trình Cursor")(
             self.kill_cursor)
-        self.app.callback(invoke_without_command=True)(self.main)
-
-    def info(self):
-        try:
-            version = self.cursor_manager.get_version()
-            self.console.print_version(version)
-        except Exception as e:
-            self.console.print_error(str(e))
+        self.app.command(name="reset-tai-khoan", help="Reset thông số tài khoản Cursor")(
+            self.reset_account)
+        self.app.callback()(self.main)
 
     def reset(self):
         success = self.cursor_manager.reset_cursor()
         if success:
             self.console.print_success("Reset Cursor thành công!")
+
+            answer = questionary.confirm(
+                "Bạn có muốn reset thông số tài khoản luôn không?",
+                default=True,
+                style=self.menu.style
+            ).ask()
+
+            if answer:
+                account_success = self.cursor_manager.reset_account()
+                if account_success:
+                    self.console.print_success(
+                        "Đã reset thông số tài khoản Cursor!")
+                    self.browser_handler.open_auth_page()
+                else:
+                    self.console.print_failure(
+                        "Reset thông số tài khoản thất bại!")
         else:
             self.console.print_failure("Reset Cursor thất bại!")
 
@@ -58,25 +71,12 @@ class CursorManagerCLI:
         else:
             self.console.print_failure("Không thể tắt tự động cập nhật!")
 
-    def status(self):
-        try:
-            version = self.cursor_manager.get_version()
-            data = {
-                "Phiên bản": version,
-                "Package Path": self.cursor_manager.package_path,
-                "Main Path": self.cursor_manager.main_path,
-                "State Path": self.cursor_manager.state_path
-            }
-            self.console.print_status_table(data)
-        except Exception as e:
-            self.console.print_error(f"Lỗi khi lấy thông tin: {str(e)}")
-
-    def download_v0_44_11(self):
+    def downgrade_to_v0_44_11(self):
         success = self.downloader.download()
         if success:
-            self.console.print_success("Tải Cursor v0.44.11 thành công!")
+            self.console.print_success("Đã tải Cursor v0.44.11!")
         else:
-            self.console.print_failure("Tải Cursor v0.44.11 thất bại!")
+            self.console.print_failure("Không thể tải Cursor v0.44.11!")
 
     def clear_cache(self):
         success = self.cleaner.clear_cache()
@@ -105,21 +105,49 @@ class CursorManagerCLI:
         except Exception as e:
             self.console.print_error(f"Lỗi khi tắt Cursor: {str(e)}")
 
-    def main(self, ctx: typer.Context):
-        choices = {
-            "Xem phiên bản Cursor": self.info,
-            "Reset Cursor": self.reset,
-            "Tắt tự động cập nhật": self.disable_update,
-            "Xem trạng thái": self.status,
-            "Xóa cache": self.clear_cache,
-            "Tắt Cursor": self.kill_cursor,
-            "Thoát": lambda: None
+    def reset_account(self):
+        success = self.cursor_manager.reset_account()
+        if success:
+            self.console.print_success("Đã reset thông số tài khoản Cursor!")
+            self.browser_handler.open_auth_page()
+        else:
+            self.console.print_failure("Reset thông số tài khoản thất bại!")
+
+    def show_help(self):
+        help_text = {
+            "Reset Cursor": "Tạo lại ID máy mới",
+            "Tắt Tự Động Cập Nhật": "Không cho Cursor tự cập nhật",
+            "Dọn Dẹp": "Xóa file tạm và rác",
+            "Tắt Nhanh": "Đóng hết Cursor đang chạy",
+            "Cài Phiên Bản v0.44.11": "Quay về phiên bản cũ ổn định",
+            "Reset Tài Khoản": "Reset usage trial đã sử dụng",
+            "Trợ Giúp": "Xem hướng dẫn sử dụng",
+            "Thoát": "Thoát khỏi chương trình"
         }
 
-        if self.downloader.should_download():
-            choices["Tải Cursor v0.44.11"] = self.download_v0_44_11
+        self.console.print_help_table(help_text)
 
-        self.menu.show(choices)
+    def main(self, ctx: typer.Context):
+        if ctx.invoked_subcommand is None:
+            choices = {
+                "Reset Cursor": self.reset,
+                "Tắt Tự Động Cập Nhật": self.disable_update,
+                "Dọn Dẹp": self.clear_cache,
+                "Tắt Nhanh": self.kill_cursor,
+            }
+            try:
+                current_version = self.cursor_manager.get_version()
+                if current_version != "0.44.11":
+                    choices["Cài Phiên Bản v0.44.11"] = self.downgrade_to_v0_44_11
+            except Exception:
+                choices["Cài Phiên Bản v0.44.11"] = self.downgrade_to_v0_44_11
+            choices.update({
+                "Reset Tài Khoản": self.reset_account,
+                "Trợ Giúp": self.show_help,
+                "Thoát": lambda: None
+            })
+
+            self.menu.show(choices)
 
     def run(self):
         self.app()

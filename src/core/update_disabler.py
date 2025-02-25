@@ -21,11 +21,11 @@ class CursorAutoUpdateDisabler:
                     try:
                         proc.kill()
                         killed = True
-                        self.logger.success('Đã kill cursor.exe')
+                        self.logger.success('Đã tắt Cursor')
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        self.logger.warning('Không thể kill cursor.exe')
+                        self.logger.warning('Không thể tắt Cursor')
             if not killed:
-                self.logger.info('Không tìm thấy cursor.exe')
+                self.logger.info('Cursor không chạy')
             return True
         except Exception as e:
             self.logger.error(f'Lỗi: {e}')
@@ -52,7 +52,7 @@ class CursorAutoUpdateDisabler:
 
     def disable_auto_update(self) -> bool:
         if self.updater_path.is_file():
-            self.logger.info('Đã disable auto-update từ trước')
+            self.logger.info('Đã disable auto-update!')
             return True
 
         if not self._kill_cursor_processes():

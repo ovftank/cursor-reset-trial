@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 import os
@@ -10,6 +11,9 @@ import winreg
 from dataclasses import dataclass
 from typing import Dict, Optional
 
+import requests
+
+from src.core.cursor_cleaner import CursorCleaner
 from src.utils.colorful_logger import ColorfulLogger
 
 
@@ -26,6 +30,7 @@ class CursorManager:
         self.logger = ColorfulLogger(__name__)
         self._paths = self._initialize_paths()
         self._version: Optional[str] = None
+        self.cleaner = CursorCleaner()
 
     def _initialize_paths(self) -> CursorPaths:
         base_path = os.path.join(
@@ -125,31 +130,39 @@ class CursorManager:
     def _update_file_permissions(self, file_path: str, mode: int) -> None:
         if os.path.exists(file_path):
             try:
-                os.chmod(file_path, mode)
+                current_mode = os.stat(file_path).st_mode & 0o777
+                if current_mode != mode:
+                    os.chmod(file_path, mode)
+                    action = "mở quyền ghi" if mode == 0o666 else "đặt chế độ chỉ đọc"
+                    self.logger.info(
+                        f"Đã {action} cho {os.path.basename(file_path)}")
             except PermissionError:
-                action = "set quyền" if mode == 0o666 else "set read-only"
-                self.logger.warning(f"Không thể {action} cho {file_path}")
+                action = "mở quyền ghi" if mode == 0o666 else "đặt chế độ chỉ đọc"
+                self.logger.error(
+                    f"Không thể {action} cho {os.path.basename(file_path)}")
+                raise
 
     def _update_state_database(self, new_ids: Dict[str, str]) -> None:
-        conn = sqlite3.connect(self.state_path)
-        cursor = conn.cursor()
+        if self._version != "0.44.11":
+            conn = sqlite3.connect(self.state_path)
+            cursor = conn.cursor()
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS ItemTable (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            )
-        """)
-
-        for key, value in new_ids.items():
             cursor.execute("""
-                INSERT OR REPLACE INTO ItemTable (key, value)
-                VALUES (?, ?)
-            """, (key, value))
-            self.logger.info(f"Cập nhật {key} trong state DB")
+                CREATE TABLE IF NOT EXISTS ItemTable (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+            """)
 
-        conn.commit()
-        conn.close()
+            for key, value in new_ids.items():
+                cursor.execute("""
+                    INSERT OR REPLACE INTO ItemTable (key, value)
+                    VALUES (?, ?)
+                """, (key, value))
+                self.logger.info(f"Cập nhật {key} trong state DB")
+
+            conn.commit()
+            conn.close()
 
     def _update_storage_database(self, new_ids: Dict[str, str]) -> None:
         storage_data = {}
@@ -157,14 +170,26 @@ class CursorManager:
             try:
                 with open(self.db_path, 'r', encoding='utf-8') as f:
                     storage_data = json.load(f)
+
+                    update_keys = [
+                        "telemetry.devDeviceId",
+                        "telemetry.macMachineId",
+                        "telemetry.machineId",
+                        "telemetry.sqmId",
+                        "storage.serviceMachineId"
+                    ]
+
+                    for key in update_keys:
+                        if key in new_ids:
+                            storage_data[key] = new_ids[key]
+                            self.logger.info(
+                                f"Cập nhật {key} trong storage DB")
+
             except json.JSONDecodeError:
                 self.logger.warning("File storage.json không hợp lệ, tạo mới")
-
-        storage_data.update({
-            "machineId": new_ids["telemetry.machineId"],
-            "macMachineId": new_ids["telemetry.macMachineId"],
-            "deviceId": new_ids["telemetry.devDeviceId"]
-        })
+                storage_data = new_ids
+        else:
+            storage_data = new_ids
 
         with open(self.db_path, 'w', encoding='utf-8') as f:
             json.dump(storage_data, f, indent=4)
@@ -184,7 +209,7 @@ class CursorManager:
             self._update_storage_database(new_ids)
             self.logger.success("Đã cập nhật storage DB")
 
-            for file_path in [self.state_path, self.db_path]:
+            for file_path in [self.db_path]:
                 self._update_file_permissions(file_path, 0o444)
 
             return True
@@ -221,6 +246,14 @@ class CursorManager:
     def reset_cursor(self) -> bool:
         self.logger.info("Bắt đầu reset Cursor...")
 
+        if self.cleaner._is_cursor_running():
+            self.logger.info("Đang tắt Cursor...")
+            self.cleaner._kill_cursor_processes()
+
+        self.logger.info("Đang xóa cache...")
+        if not self.cleaner.clear_cache():
+            self.logger.warning("Có lỗi khi xóa cache, nhưng vẫn tiếp tục reset")
+
         if not self.reset_machine_id():
             self.logger.error("Lỗi reset ID")
             return False
@@ -232,3 +265,85 @@ class CursorManager:
             return False
         self.logger.success("Reset thành công!")
         return True
+
+    def reset_account(self) -> bool:
+        try:
+            if self.cleaner._is_cursor_running():
+                self.logger.info("Đang tắt Cursor...")
+                self.cleaner._kill_cursor_processes()
+
+            self.logger.info("Đang reset thông số tài khoản Cursor...")
+
+            conn = sqlite3.connect(self.state_path)
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT value FROM ItemTable
+                WHERE key = 'cursorAuth/accessToken'
+            """)
+
+            result = cursor.fetchone()
+            conn.close()
+
+            if not result:
+                self.logger.error("Không tìm thấy access token")
+                return False
+
+            access_token = result[0]
+
+            try:
+                payload = access_token.split('.')[1]
+                padding = 4 - (len(payload) % 4)
+                if padding != 4:
+                    payload += '=' * padding
+
+                decoded = base64.b64decode(payload)
+                token_data = json.loads(decoded)
+
+                user_id = token_data['sub'].split(
+                    '|')[1] if '|' in token_data['sub'] else token_data['sub']
+            except Exception as e:
+                self.logger.error(f"Lỗi parse token: {str(e)}")
+                return False
+
+            headers = {
+                'accept': '*/*',
+                'accept-language': 'en,vi;q=0.9',
+                'content-type': 'application/json',
+                'authorization': f'Bearer {access_token}',
+                'origin': 'https://www.cursor.com',
+                'referer': 'https://www.cursor.com/settings',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin'
+            }
+
+            cookies = {
+                'WorkosCursorSessionToken': f'{user_id}::{access_token}'
+            }
+
+            response = requests.post(
+                'https://www.cursor.com/api/dashboard/delete-account',
+                headers=headers,
+                cookies=cookies,
+                json={},
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                self.logger.success("Đã reset thông số tài khoản thành công!")
+                return True
+            else:
+                self.logger.error(
+                    f"Lỗi khi reset thông số tài khoản: HTTP {response.status_code}")
+                self.logger.error(f"Response: {response.text}")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Lỗi reset thông số tài khoản: {str(e)}")
+            self.logger.error(f"Chi tiết lỗi: {repr(e)}")
+            return False

@@ -48,3 +48,18 @@ class ConsoleManager:
 
     def print_info(self, message: str):
         self.console.print(f"[bold blue]ℹ[/] {message}")
+
+    def print_help_table(self, help_text: dict):
+        table = Table(
+            title="Hướng Dẫn Sử Dụng",
+            border_style="bright_green",
+            show_header=True,
+            header_style="bold bright_blue"
+        )
+        table.add_column("Chức năng", style="bright_blue")
+        table.add_column("Mô tả", style="bright_green")
+
+        for command, description in help_text.items():
+            table.add_row(command, description)
+
+        self.console.print(table)

@@ -1,7 +1,9 @@
 import os
+import subprocess
 from pathlib import Path
 from typing import Optional
 
+import psutil
 import requests
 from tqdm import tqdm
 
@@ -13,7 +15,7 @@ class CursorDownloader:
     def __init__(self):
         self.logger = ColorfulLogger(__name__)
         self.cursor_manager = CursorManager()
-        self.download_url = "https://downloader.cursor.sh/builds/250103fqxdt5u9z/windows/nsis/x64/Cursor-Setup.exe"
+        self.download_url = "https://downloader.cursor.sh/builds/250103fqxdt5u9z/windows/nsis/x64"
         self.version = "0.44.11"
 
     def should_download(self) -> bool:
@@ -56,8 +58,47 @@ class CursorDownloader:
                     pbar.update(size)
 
             self.logger.success(f"Đã tải xong: {output_path}")
-            return True
+            return self._install(output_path)
 
         except requests.RequestException as e:
             self.logger.error(f"Lỗi khi tải: {str(e)}")
+            return False
+
+    def _install(self, setup_path: str) -> bool:
+        try:
+            self.logger.info("Bắt đầu cài đặt Cursor...")
+
+            for proc in psutil.process_iter(['name', 'pid']):
+                try:
+                    if proc.info['name'].lower() == 'cursor.exe':
+                        psutil.Process(proc.info['pid']).terminate()
+                        self.logger.info(
+                            f"Đã tắt Cursor (PID: {proc.info['pid']})")
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+            process = subprocess.Popen(
+                ['start', '/wait', setup_path],
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+
+            try:
+                process.wait(timeout=120)
+                if process.returncode == 0:
+                    self.logger.success("Cài đặt Cursor thành công!")
+                    os.remove(setup_path)
+                    return True
+                else:
+                    self.logger.error(
+                        f"Cài đặt thất bại với mã lỗi: {process.returncode}")
+                    return False
+            except subprocess.TimeoutExpired:
+                process.kill()
+                self.logger.error("Quá thời gian cài đặt")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Lỗi trong quá trình cài đặt: {str(e)}")
             return False

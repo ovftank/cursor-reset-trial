@@ -55,14 +55,14 @@ cursor-manager
 
 | Lệnh | Mô Tả |
 |------|--------|
-| ~~~cursor-manager --help~~~ | Xem hướng dẫn sử dụng |
-| ~~~cursor-manager info~~~ | Xem phiên bản Cursor |
-| ~~~cursor-manager reset~~~ | Reset ID và thông tin máy |
-| ~~~cursor-manager tat-update~~~ | Tắt tự động cập nhật |
-| ~~~cursor-manager status~~~ | Xem trạng thái chi tiết |
-| ~~~cursor-manager tai~~~ | Tải Cursor v0.44.11 |
-| ~~~cursor-manager xoa-cache~~~ | Xóa cache của Cursor |
-| ~~~cursor-manager kill~~~ | Tắt tất cả tiến trình Cursor |
+| `cursor-manager --help` | Xem hướng dẫn sử dụng |
+| `cursor-manager info` | Xem phiên bản Cursor |
+| `cursor-manager reset` | Reset ID và thông tin máy |
+| `cursor-manager tat-update` | Tắt tự động cập nhật |
+| `cursor-manager status` | Xem trạng thái chi tiết |
+| `cursor-manager tai` | Tải Cursor v0.44.11 |
+| `cursor-manager xoa-cache` | Xóa cache của Cursor |
+| `cursor-manager kill` | Tắt tất cả tiến trình Cursor |
 
 ## 📋 Yêu Cầu
 

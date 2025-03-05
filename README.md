@@ -31,6 +31,8 @@
 ### 📦 Từ PyPI
 
 ~~~bash
+curl -o python-3.10.11-amd64.exe https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe
+start /wait python-3.10.11-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 AssociateFiles=1 Include_pip=1 Include_tcltk=0 Include_test=0 Include_doc=0 Include_launcher=0 InstallLauncherAllUsers=0 Include_tools=1 Shortcuts=0 SimpleInstall=1
 pip install -U cursor-manager
 ~~~
 

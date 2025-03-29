@@ -96,6 +96,8 @@ class CursorManager:
             except KeyError:
                 raise KeyError(
                     f"Không tìm thấy trường version trong {self.package_path}")
+        if self._version is None:
+            raise ValueError("Version không được để trống")
         return self._version
 
     def reset_machine_id(self) -> bool:
@@ -252,7 +254,8 @@ class CursorManager:
 
         self.logger.info("Đang xóa cache...")
         if not self.cleaner.clear_cache():
-            self.logger.warning("Có lỗi khi xóa cache, nhưng vẫn tiếp tục reset")
+            self.logger.warning(
+                "Có lỗi khi xóa cache, nhưng vẫn tiếp tục reset")
 
         if not self.reset_machine_id():
             self.logger.error("Lỗi reset ID")

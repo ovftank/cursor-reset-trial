@@ -137,7 +137,7 @@ class CursorManagerCLI:
             }
             try:
                 current_version = self.cursor_manager.get_version()
-                if current_version != "0.44.11":
+                if current_version != "0.44.11" and current_version != "0.47.8":
                     choices["Cài Phiên Bản v0.44.11"] = self.downgrade_to_v0_44_11
             except Exception:
                 choices["Cài Phiên Bản v0.44.11"] = self.downgrade_to_v0_44_11
